@@ -23,57 +23,171 @@ The script made it so it hid all the coins with images so the "proper" coins so 
      }, 1);
 """
 
-"""
-TO PUT DATA INTO CSV
-
-from bs4 import BeautifulSoup
-import csv 
-import urllib.request as urllib2
-
-url="http://www.conakat.com/states/ohio/cities/defiance/road_maps/"
-
-page=urllib2.urlopen(url)
-
-soup = BeautifulSoup(page.read())
-
-f = csv.writer(open("Defiance Steets1.csv", "w"))
-f.writerow(["Name", "ZipCodes"]) # Write column headers as the first line
-
-links = soup.find_all('a')
-
-for link in links:
-    i = link.find_next_sibling('i')
-    if getattr(i, 'name', None):
-        a, i = link.string, i.string
-        f.writerow([a, i])
-"""
-
 
 from datetime import datetime,date 
 from bs4 import BeautifulSoup as bs
 #import time
-import csv 
+import requests
 from urllib.request import Request, urlopen
+import regex as re
+from pprint import pprint as pp
+import time
 
-site= "https://bscscan.com/tokentxns"
+url= "https://bscscan.com/tokentxns"
+
+
 hdr = {'User-Agent': 'Mozilla/5.0'}
-req = Request(site,headers=hdr)
+req = Request(url,headers=hdr)
 page = urlopen(req)
 soup = bs(page)
+
 #print(soup.text)
 
-csv_file = csv.writer(open("shitcoins.csv", "w"))
-csv_file.writerow(["Name", "Address","N-Transactions","LastTransactionIstance"]) # Write column headers as the first line
-
-
-shitcoins = soup.find("tbody")
-
-for i in shitcoins:
-    print("---------------------------------------------")
-    print(i)
-    print("_____________________________________________")
 
 coins = {} # every coinName : {Address:..., N-Transactions:..., LastTransactionIstance:...}
+
+
+
+whitelist = "/images/main/empty-token.png"
+
+
+print("---------------------------------------------")
+print("_____________________________________________")
+
+# =============================================================================
+# #THIS TESTED WHICH WAS FASTER BETWEEN .find("table") and .table
+# #NO SIGNIFICANT DIFFERENCE WAS FOUND BUT .find TENDS TO BE FASTER IN THIS CASE (3-7% faster)
+# w = [0,0]
+# for i in range(10000):
+#     t0 = time.time()
+#     soup.find("table").find("tbody")
+#     t1 = time.time()
+#     soup.table.tbody
+#     t2 = time.time()
+#     print(i)
+#     a = t1-t0
+#     b = t2-t1
+#     if a<b:
+#         print("soup.find('table') WINS")
+#         w[0] = w[0]+1
+#     elif a>b:
+#         print("soup.table WINS")
+#         w[1] = w[1]+1
+#     else:
+#         print("TIE")
+# print(w)   
+# 
+# =============================================================================
+
+# =============================================================================
+# rows = soup.find("table").find("tbody").find_all("tr")
+# for row in rows:
+#     info = row.find_all("td")
+#     for i in range(len(info)):
+#         print("---------------------------------------------")
+#         print(i)
+#         print(info[i])
+#         print("_____________________________________________")
+#     txnHash = info[1].text.strip()
+#     amount = info[7].text.strip()
+#     time = info[2].text.strip()
+#     coincode = info[-1].text.strip()
+#     address = info[-1].find("a")["href"].split("/")[-1]
+#     img = info[-1].find("img")["src"]
+#     if img == whitelist:
+#         coins[address] = {}
+#         coins[address]["coincode"] = coincode
+#         coins[address]["transaction-instant"] = time
+#         try:
+#             coins[address]["n-transactions"]+=1
+#         except:
+#             coins[address]["n-transactions"]=1
+# pp(coins)
+# =============================================================================
+
+
+
+def rows(url):
+    hdr = {'User-Agent': 'Mozilla/5.0'}
+    req = Request(url,headers=hdr)
+    page = urlopen(req)
+    soup = bs(page)
+    table = soup.find("table")
+    if table != None:
+        tbody = table.find("tbody")
+        if tbody != None:
+            r = tbody.find_all("tr")
+            if r != None:
+                return r
+            
+def check(r):
+    return type(r)
+    
+def markingCoins(row):
+    info = row.find_all("td")
+    #differentiated data in each row
+    txnHash = info[1].text.strip()
+    amount = info[7].text.strip()
+    time = info[2].text.strip()
+    coincode = info[-1].text.strip()
+    address = info[-1].find("a")["href"].split("/")[-1]
+    img = info[-1].find("img")["src"]
+    
+    if img == whitelist:
+        return address, coincode, time, txnHash, amount
+    
+def fillDictionary(coins: dict()):
+    if check(rows(url)) != type(None):
+        for row in rows(url):
+            if markingCoins(row) != None:
+                address, coincode, time, txnHash, amount = markingCoins(row)
+                coins[address] = {}
+                coins[address]["coincode"] = coincode
+                coins[address]["transactionInstant"] = time
+                coins[address]["transactionHash"] = txnHash
+                coins[address]["amount"] = amount
+        return coins
+    else:
+        return 0
+
+
+#print(fillDictionary(coins))
+
+
+
+
+# =============================================================================
+# table = soup.table
+# tbody = table.tbody
+# tds = []
+# for tr in tbody:
+#     print("---------------------------------------------")
+#     trr = tbody.tr
+#     print(trr)
+#     print("_____________________________________________")
+#     print(type(trr))
+# 
+# =============================================================================
+#print(tds)
+
+# =============================================================================
+# table = soup.find("tbody")
+# 
+# for i in table:
+#     print("---------------------------------------------")
+#     print(i)
+#     i.name = "img"
+#     print("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
+#     for td in i:
+#         print("TDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTD")
+#         token_address = td.find("a")
+#         image = td.find("img")
+#         print(token_address)
+#         print(image)
+#         print("TDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTDTD")
+#     print("_____________________________________________")
+# =============================================================================
+
 
 #print(shitcoins)
 
