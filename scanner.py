@@ -24,14 +24,10 @@ The script made it so it hid all the coins with images so the "proper" coins so 
 """
 
 
-from datetime import datetime,date 
 from bs4 import BeautifulSoup as bs
-#import time
-import requests
 from urllib.request import Request, urlopen
-import regex as re
 from pprint import pprint as pp
-import time
+
 
 url= "https://bscscan.com/tokentxns"
 
@@ -57,6 +53,7 @@ print("_____________________________________________")
 # =============================================================================
 # #THIS TESTED WHICH WAS FASTER BETWEEN .find("table") and .table
 # #NO SIGNIFICANT DIFFERENCE WAS FOUND BUT .find TENDS TO BE FASTER IN THIS CASE (3-7% faster)
+# ipmort time
 # w = [0,0]
 # for i in range(10000):
 #     t0 = time.time()
@@ -105,6 +102,17 @@ print("_____________________________________________")
 # pp(coins)
 # =============================================================================
 
+# =============================================================================
+# def coinCode(address):
+#     url = "https://bscscan.com/token/{}".format(address)
+#     hdr = {'User-Agent': 'Mozilla/5.0'}
+#     req = Request(url,headers=hdr)
+#     page = urlopen(req)
+#     soup = bs(page)
+#     coincode = soup.find("span",{"class":"text-secondary small"}).text.strip()
+#     code = soup.find("div",{"class":"col-md-8 font-weight-medium"}).find("b").text.strip()
+#     return coincode + "({})".format(code)
+# =============================================================================
 
 
 def rows(url):
@@ -120,9 +128,7 @@ def rows(url):
             if r != None:
                 return r
             
-def check(r):
-    return type(r)
-    
+
 def markingCoins(row):
     info = row.find_all("td")
     #differentiated data in each row
@@ -132,12 +138,14 @@ def markingCoins(row):
     coincode = info[-1].text.strip()
     address = info[-1].find("a")["href"].split("/")[-1]
     img = info[-1].find("img")["src"]
-    
     if img == whitelist:
-        return address, coincode, time, txnHash, amount
+       return address, coincode, time, txnHash, amount
     
 def fillDictionary(coins: dict()):
-    if check(rows(url)) != type(None):
+    r = rows(url)
+    if r is None:
+        return 0
+    elif r is not None:
         for row in rows(url):
             if markingCoins(row) != None:
                 address, coincode, time, txnHash, amount = markingCoins(row)
@@ -147,8 +155,7 @@ def fillDictionary(coins: dict()):
                 coins[address]["transactionHash"] = txnHash
                 coins[address]["amount"] = amount
         return coins
-    else:
-        return 0
+    else: return 0
 
 
 #print(fillDictionary(coins))
