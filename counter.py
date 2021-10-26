@@ -5,6 +5,17 @@ import numpy as np
 import pandas as pd
 from pprint import pprint
 import time
+import scam_coins
+import time
+import asyncio
+from dexguru_sdk import DexGuru
+
+YOUR_API_KEY = 'EXeZ404OuO3dww0eRzESkPT77IORFvFiL33xRjwAXME'
+BSC_CHAIN_ID = 56
+
+sdk = DexGuru(api_key=YOUR_API_KEY)
+#address = "0xcbd7142e42666132abe1f4c57996b2d5e8b0c9e2"
+ 
 
 
 """
@@ -36,52 +47,88 @@ for link in links:
 # csv_file = csv.writer(open("shitcoins.csv", "w"))
 # csv_file.writerow(["Name", "Address","N-Transactions","LastTransactionIstance"]) # Write column headers as the first line
 # =============================================================================
-
+t0 = time.time()
 url= "https://bscscan.com/tokentxns"
+SCAMS = scam_coins.get_scam_addresses()
 
+async def get_coin_data(address):
+    data = await sdk.get_token_finance(BSC_CHAIN_ID,address)
+    data_dict = {}
+    for d in data:
+        data_dict[d[0]] = d[1]
+        
+    return data_dict
 
-count = {}
-t = 1000
-for i in range(t):
-    time.sleep(1)
-    mostbought_coins = []
-    try:
-        d = scanner.fillDictionary({})
-    except:
-        d = 0
-    print(i,d)
-    if d == 0 or d == None or type(d) == type(None):
-        pass
-    #print(i,d)   qui la funzione fillDictionary ritornava solo se rows(url) era un NoneType o no
-    #print(d)
-    else:
-        if type(d) != type(None):
-            try:
-                dfUpdate = pd.read_csv("shitcoins.csv")
-            except:
-               dfUpdate = pd.DataFrame(data=d).T
-               dfUpdate.to_csv("shitcoins.csv")  
-               
-            dfUpdate = pd.read_csv("shitcoins.csv")
-            try:
-                dfUpdate = dfUpdate.set_index("Unnamed: 0")
-            except:
-                continue
-            for i in d:
-               if i in dfUpdate.index:
-                   print("{}: sono li dentro".format(i))
-                   dfUpdate.loc[i, "transactionInstant"] = d[i]["transactionInstant"]
-                   dfUpdate.loc[i, "transactionHash"] = d[i]["transactionHash"]
-                   dfUpdate.loc[i, "amount"] = dfUpdate.loc[i, "amount"] + d[i]["amount"]
-                   dfUpdate.loc[i, "n-transactions"] += 1
-               else:
-                   print("{}: non sono li dentro".format(i))
-                   d[i]["n-transactions"] = 1
-                   da_aggiungere = {i:d[i]}
-                   dfDA = pd.DataFrame(data = da_aggiungere).T
-                   dfUpdate = dfUpdate.append(dfDA)
+async def main():
+    count = {}
+    t = 100
+    for i in range(t):
+        time.sleep(1)
+        mostbought_coins = []
+        try:
+            d = scanner.fillDictionary({})
+        except:
+            d = 0
+        print(i,d)
+        if d == 0 or d == None or type(d) == type(None):
+            pass
+        #print(i,d)   qui la funzione fillDictionary ritornava solo se rows(url) era un NoneType o no
+        #print(d)
+        else:
+            if type(d) != type(None):
+                try:
+                    dfUpdate = pd.read_csv("shitcoins.csv")
+                except:
+                   dfUpdate = pd.DataFrame(data=d).T
+                   dfUpdate.to_csv("shitcoins.csv")  
                    
-            dfUpdate.to_csv("shitcoins.csv")
+                dfUpdate = pd.read_csv("shitcoins.csv")
+                try:
+                    dfUpdate = dfUpdate.set_index("Unnamed: 0")
+                except:
+                    continue
+                for i in d:
+                    #g = await get_coin_data(i)
+                    #print(g)
+                    if i in SCAMS:
+                        print("{}: SCAMMINO".format(i))
+                        continue
+                    if i in dfUpdate.index:
+                        print("{}: sono li dentro".format(i))
+                        dfUpdate.loc[i, "transactionInstant"] = d[i]["transactionInstant"]
+                        dfUpdate.loc[i, "transactionHash"] = d[i]["transactionHash"]
+                        dfUpdate.loc[i, "amount"] = dfUpdate.loc[i, "amount"] + d[i]["amount"]#*g["price_usd"]
+                        dfUpdate.loc[i, "n-transactions"] += 1
+                    else:
+                        print("{}: non sono li dentro".format(i))
+                        d[i]["n-transactions"] = 1
+                        #d[i]["amount"] = d[i]["amount"]*g["price_usd"]
+                        da_aggiungere = {i:d[i]}
+                        dfDA = pd.DataFrame(data = da_aggiungere).T
+                        dfUpdate = dfUpdate.append(dfDA)
+                       
+                dfUpdate.to_csv("shitcoins.csv")
+
+try:
+    loop = asyncio.get_running_loop()
+except RuntimeError:  # 'RuntimeError: There is no current event loop...'
+    loop = None
+
+if loop and loop.is_running():
+    print('Async event loop already running. Adding coroutine to the event loop.')
+    tsk = loop.create_task(main())
+    # ^-- https://docs.python.org/3/library/asyncio-task.html#task-object
+    # Optionally, a callback function can be executed when the coroutine completes
+    tsk.add_done_callback(
+        lambda t: print(f'Task done with result={t.result()}  << return val of main()'))
+else:
+    print('Starting new event loop')
+    asyncio.run(main())
+
+#pprint(count)
+columns = ("amount","coincode","n-transactions","transactionHash","transactionInstant")
+t1 = time.time()
+print(t1-t0)
 # =============================================================================
 #             for k in d:
 # # =============================================================================
@@ -98,9 +145,6 @@ for i in range(t):
 #                         continue
 # =============================================================================
 
-
-#pprint(count)
-columns = ("amount","coincode","n-transactions","transactionHash","transactionInstant")
 
 # =============================================================================
 # #used this to create the file for the first time

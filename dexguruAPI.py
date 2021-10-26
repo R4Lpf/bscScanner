@@ -49,17 +49,24 @@ async get_tokens_finance(self, chain_id: int, token_addresses: List[str] = None,
 import asyncio
 from dexguru_sdk import DexGuru
 
-YOUR_API_KEY = ''
+YOUR_API_KEY = 'EXeZ404OuO3dww0eRzESkPT77IORFvFiL33xRjwAXME'
 BSC_CHAIN_ID = 56
 
 sdk = DexGuru(api_key=YOUR_API_KEY)
 address = "0xcbd7142e42666132abe1f4c57996b2d5e8b0c9e2"
-
-
-async def main():
-    print("Ha funzionato")
+ 
+async def get_coin_data(address):
     data = await sdk.get_token_finance(BSC_CHAIN_ID,address)
-    return data
+    data_dict = {}
+    for d in data:
+        data_dict[d[0]] = d[1]
+        
+    return data_dict
+
+async def main(address):
+    print("Ha funzionato")
+    result = await get_coin_data(address)
+    return result["price_usd"]
 
 # =============================================================================
 # print(main())
@@ -73,14 +80,14 @@ except RuntimeError:  # 'RuntimeError: There is no current event loop...'
 
 if loop and loop.is_running():
     print('Async event loop already running. Adding coroutine to the event loop.')
-    tsk = loop.create_task(main())
+    tsk = loop.create_task(main(address))
     # ^-- https://docs.python.org/3/library/asyncio-task.html#task-object
     # Optionally, a callback function can be executed when the coroutine completes
     tsk.add_done_callback(
         lambda t: print(f'Task done with result={t.result()}  << return val of main()'))
 else:
     print('Starting new event loop')
-    asyncio.run(main())
+    asyncio.run(main(address))
     
 # =============================================================================
 # if __name__ == '__main__':

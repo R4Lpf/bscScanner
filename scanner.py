@@ -28,7 +28,7 @@ from bs4 import BeautifulSoup as bs
 from urllib.request import Request, urlopen
 from pprint import pprint as pp
 import scam_coins
-
+import asyncio
 
 url = "https://bscscan.com/tokentxns"
 scam_url = "https://tokensniffer.com/tokens/scam"
@@ -149,7 +149,7 @@ def fillDictionary(coins: dict()):
     if r is None:
         return 0
     elif r is not None:
-        for row in rows(url):
+        for row in r:
             if markingCoins(row) != None:
                 address, coincode, time, txnHash, amount = markingCoins(row)
                 coins[address] = {}

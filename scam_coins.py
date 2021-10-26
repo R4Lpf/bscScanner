@@ -3,6 +3,7 @@ from urllib.request import Request, urlopen
 from pprint import pprint as pp
 
 
+
 scam_url= "https://tokensniffer.com/tokens/scam"
 
 
