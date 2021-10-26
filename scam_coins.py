@@ -34,5 +34,8 @@ def get_scam_addresses():
 def isAScam(address):
     return address in get_scam_addresses()
 
-print(get_scam_addresses())
-print(isAScam("0xb3a6381070b1a15169dea646166ec0699fdaea79"))
+# =============================================================================
+# print(get_scam_addresses())
+# print(isAScam("0xb3a6381070b1a15169dea646166ec0699fdaea79"))
+# 
+# =============================================================================

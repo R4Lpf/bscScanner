@@ -141,7 +141,7 @@ def markingCoins(row):
     coincode = info[-1].text.strip()
     address = info[-1].find("a")["href"].split("/")[-1]
     img = info[-1].find("img")["src"]
-    if img == whitelist and scam_coins.isAScam(address) == False:
+    if img == whitelist: #and scam_coins.isAScam(address) == False
        return address, coincode, time, txnHash, amount
     
 def fillDictionary(coins: dict()):
