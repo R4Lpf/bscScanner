@@ -41,7 +41,7 @@ url= "https://bscscan.com/tokentxns"
 
 
 count = {}
-t = 10
+t = 1000
 for i in range(t):
     time.sleep(1)
     mostbought_coins = []

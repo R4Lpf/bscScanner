@@ -23,6 +23,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 import time
 from pyvirtualdisplay import Display
+import time
 #import telegram_send
 #from api.constants import *
 
@@ -38,7 +39,7 @@ def scraping(url):
     chrome_options.add_argument('--disable-extensions')
     chrome_options.add_argument('--profile-directory=Default')
     chrome_options.add_argument("--incognito")
-    #chrome_options.add_argument("--headless")
+    chrome_options.headless = True
     chrome_options.add_argument("--disable-plugins-discovery")
     driver = webdriver.Chrome(executable_path="chromedriver.exe", options=chrome_options)
     driver.delete_all_cookies()
@@ -53,13 +54,19 @@ def scraping(url):
     return BeautifulSoup(html, 'lxml')
 
 # Get Html
+t0 = time.time()
 page = scraping("https://poocoin.app/tokens/" + coin_address)
+t1 = time.time()
+
 print(page)
+print(t1-t0)
 # Extract price as str
-prices = page.find_all("span", class_="text-success")
-# the element position always changes
-price = prices[7].getText()
-print(price)
+# =============================================================================
+# prices = page.find_all("span", class_="text-success")
+# # the element position always changes
+# price = prices[7].getText()
+# print(price)
+# =============================================================================
 # =============================================================================
 # from bs4 import BeautifulSoup
 # from selenium import webdriver

@@ -27,9 +27,11 @@ The script made it so it hid all the coins with images so the "proper" coins so 
 from bs4 import BeautifulSoup as bs
 from urllib.request import Request, urlopen
 from pprint import pprint as pp
+import scam_coins
 
 
-url= "https://bscscan.com/tokentxns"
+url = "https://bscscan.com/tokentxns"
+scam_url = "https://tokensniffer.com/tokens/scam"
 
 
 hdr = {'User-Agent': 'Mozilla/5.0'}
@@ -127,7 +129,8 @@ def rows(url):
             r = tbody.find_all("tr")
             if r != None:
                 return r
-            
+
+scams = rows(scam_url)
 
 def markingCoins(row):
     info = row.find_all("td")
@@ -138,7 +141,7 @@ def markingCoins(row):
     coincode = info[-1].text.strip()
     address = info[-1].find("a")["href"].split("/")[-1]
     img = info[-1].find("img")["src"]
-    if img == whitelist:
+    if img == whitelist and scam_coins.isAScam(address) == False:
        return address, coincode, time, txnHash, amount
     
 def fillDictionary(coins: dict()):
