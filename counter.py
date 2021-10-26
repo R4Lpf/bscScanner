@@ -72,7 +72,7 @@ for i in range(t):
                    print("{}: sono li dentro".format(i))
                    dfUpdate.loc[i, "transactionInstant"] = d[i]["transactionInstant"]
                    dfUpdate.loc[i, "transactionHash"] = d[i]["transactionHash"]
-                   dfUpdate.loc[i, "amount"] = d[i]["amount"]
+                   dfUpdate.loc[i, "amount"] = dfUpdate.loc[i, "amount"] + d[i]["amount"]
                    dfUpdate.loc[i, "n-transactions"] += 1
                else:
                    print("{}: non sono li dentro".format(i))
