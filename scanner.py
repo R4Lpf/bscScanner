@@ -29,9 +29,17 @@ from urllib.request import Request, urlopen
 from pprint import pprint as pp
 import scam_coins
 import asyncio
+from dexguru_sdk import DexGuru
+
+YOUR_API_KEY = ''
+BSC_CHAIN_ID = 56
+
+sdk = DexGuru(api_key=YOUR_API_KEY)
 
 url = "https://bscscan.com/tokentxns"
 scam_url = "https://tokensniffer.com/tokens/scam"
+
+SCAMS = scam_coins.get_scam_addresses()
 
 
 hdr = {'User-Agent': 'Mozilla/5.0'}
@@ -50,6 +58,7 @@ whitelist = "/images/main/empty-token.png"
 
 
 print("---------------------------------------------")
+print("")
 print("_____________________________________________")
 
 # =============================================================================
@@ -117,6 +126,23 @@ print("_____________________________________________")
 # =============================================================================
 
 
+async def get_coin_data(address):
+    try:
+        #with time_limit(1):
+        data = await asyncio.wait_for(sdk.get_token_finance(BSC_CHAIN_ID,address), timeout=1.0)
+    except asyncio.TimeoutError:
+        #print('timeout!')
+        return -2
+    except: #TimeoutException as e:
+        #print("Timed out!")
+        return -1 # WHEN IT FAILS TO GET THE PRICE DATA, IT MEANS THERE'S NOTHING ON DEXGURU ABOUT IT AND NEITHER IN POOCOIN.
+    data_dict = {}
+    for d in data:
+        data_dict[d[0]] = d[1]
+
+    return data_dict["price_usd"]
+
+
 def rows(url):
     hdr = {'User-Agent': 'Mozilla/5.0'}
     req = Request(url,headers=hdr)
@@ -130,39 +156,96 @@ def rows(url):
             if r != None:
                 return r
 
-scams = rows(scam_url)
+#scams = rows(scam_url)
 
-def markingCoins(row):
+async def markingCoins(row): #async 
     info = row.find_all("td")
-    #differentiated data in each row
+    img = info[-1].find("img")["src"]
+    address = info[-1].find("a")["href"].split("/")[-1]
     txnHash = info[1].text.strip()
     amount = info[7].text.strip()
     time = info[2].text.strip()
     coincode = info[-1].text.strip()
-    address = info[-1].find("a")["href"].split("/")[-1]
-    img = info[-1].find("img")["src"]
-    if img == whitelist: #and scam_coins.isAScam(address) == False
-       return address, coincode, time, txnHash, amount
+    if img == whitelist and address not in SCAMS: #and scam_coins.isAScam(address) == False  THIS WAS WITH ASYNC and price != -1
+        #differentiated data in each row
+        try:
+            price = await asyncio.wait_for(get_coin_data(address), timeout=1.0)
+            #print(price)
+        except asyncio.TimeoutError:
+            price = -2
+        if price > -1:
+            return address, coincode, time, txnHash, amount , price
     
-def fillDictionary(coins: dict()):
+# =============================================================================
+# async def boh():
+#     r = rows(url)
+#     if r is None:
+#         return 0
+#     elif r is not None:
+#         for row in r:
+#             if await markingCoins(row) != None:
+#                 address, coincode, time, txnHash, amount, price = await markingCoins(row)
+#                 print("{0}: amount= {1}, price = {2}".format(address,amount,price))
+# =============================================================================
+    
+async def fillDictionary(coins: dict()): #async
     r = rows(url)
     if r is None:
         return 0
     elif r is not None:
         for row in r:
-            if markingCoins(row) != None:
-                address, coincode, time, txnHash, amount = markingCoins(row)
+            try:
+                mark = await asyncio.wait_for(markingCoins(row), timeout=1.0)
+                #print(mark)
+            except asyncio.TimeoutError:
+                mark = None
+            if mark != None: #await 
+                address = mark[0]
+                coincode = mark[1]
+                time = mark[2]
+                txnHash = mark[3]
+                amount = mark[4]
+                price = mark[5]
+                #address, coincode, time, txnHash, amount, price = await markingCoins(row) #await
+    # =============================================================================
+    #                 try:
+    #                     g = await get_coin_data(address)
+    #                 except:
+    #                     g = 0
+    # =============================================================================
                 coins[address] = {}
                 coins[address]["coincode"] = coincode
                 coins[address]["transactionInstant"] = time
                 coins[address]["transactionHash"] = txnHash
-                coins[address]["amount"] = amount
+                coins[address]["amount"] = float(amount.replace(",",""))
+                #coins[address]["amount_usd"] = float(amount.replace(",","")) * price
+                coins[address]["price"] = price
+                coins[address]["amount_usd"] = float(amount.replace(",","")) * price
+                coins[address]["n-transactions"] = 1
         return coins
     else: return 0
 
 
-#print(fillDictionary(coins))
-
+# =============================================================================
+# try:
+#     loop = asyncio.get_running_loop()
+# except RuntimeError:  # 'RuntimeError: There is no current event loop...'
+#     loop = None
+# 
+# if loop and loop.is_running():
+#     print('Async event loop already running. Adding coroutine to the event loop.')
+#     tsk = loop.create_task(fillDictionary({}))
+#     # ^-- https://docs.python.org/3/library/asyncio-task.html#task-object
+#     # Optionally, a callback function can be executed when the coroutine completes
+#     tsk.add_done_callback(
+#         lambda t: print(f'Task done with result={t.result()}  << return val of main()'))
+# else:
+#     print('Starting new event loop')
+#     asyncio.run(fillDictionary({}))
+# 
+# #print(fillDictionary(coins))
+# 
+# =============================================================================
 
 
 

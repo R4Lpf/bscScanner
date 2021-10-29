@@ -5,16 +5,19 @@ import numpy as np
 import pandas as pd
 from pprint import pprint
 import time
-import scam_coins
+#import scam_coins
 import time
+
 import asyncio
-from dexguru_sdk import DexGuru
-
-YOUR_API_KEY = 'EXeZ404OuO3dww0eRzESkPT77IORFvFiL33xRjwAXME'
-BSC_CHAIN_ID = 56
-
-sdk = DexGuru(api_key=YOUR_API_KEY)
-#address = "0xcbd7142e42666132abe1f4c57996b2d5e8b0c9e2"
+# =============================================================================
+# from dexguru_sdk import DexGuru
+# 
+# YOUR_API_KEY = ''
+# BSC_CHAIN_ID = 56
+# 
+# sdk = DexGuru(api_key=YOUR_API_KEY)
+# #address = "0xcbd7142e42666132abe1f4c57996b2d5e8b0c9e2"
+# =============================================================================
  
 
 
@@ -49,27 +52,27 @@ for link in links:
 # =============================================================================
 t0 = time.time()
 url= "https://bscscan.com/tokentxns"
-SCAMS = scam_coins.get_scam_addresses()
+#SCAMS = scam_coins.get_scam_addresses()
 
-async def get_coin_data(address):
-    data = await sdk.get_token_finance(BSC_CHAIN_ID,address)
-    data_dict = {}
-    for d in data:
-        data_dict[d[0]] = d[1]
-        
-    return data_dict
+    
 
 async def main():
     count = {}
     t = 100
+    it_saltate = 0
     for i in range(t):
         time.sleep(1)
         mostbought_coins = []
         try:
-            d = scanner.fillDictionary({})
+            d = await asyncio.wait_for(scanner.fillDictionary({}), timeout=5.0) #await
+            print("---------------------------------------------")
+            print(i)
+            print("_____________________________________________")
+            print(d)
         except:
             d = 0
-        print(i,d)
+            it_saltate+=1
+            print(i,"iterazioni salatate: {}".format(it_saltate))
         if d == 0 or d == None or type(d) == type(None):
             pass
         #print(i,d)   qui la funzione fillDictionary ritornava solo se rows(url) era un NoneType o no
@@ -88,26 +91,30 @@ async def main():
                 except:
                     continue
                 for i in d:
-                    #g = await get_coin_data(i)
                     #print(g)
-                    if i in SCAMS:
-                        print("{}: SCAMMINO".format(i))
-                        continue
+    # =============================================================================
+    #                     if i in SCAMS:
+    #                         print("{}: SCAMMINO".format(i))
+    #                         continue
+    #                     else:
+    # =============================================================================
                     if i in dfUpdate.index:
                         print("{}: sono li dentro".format(i))
                         dfUpdate.loc[i, "transactionInstant"] = d[i]["transactionInstant"]
                         dfUpdate.loc[i, "transactionHash"] = d[i]["transactionHash"]
                         dfUpdate.loc[i, "amount"] = dfUpdate.loc[i, "amount"] + d[i]["amount"]#*g["price_usd"]
+                        dfUpdate.loc[i, "amount_usd"] = dfUpdate.loc[i, "amount_usd"] + d[i]["amount_usd"]
+                        dfUpdate.loc[i, "price"] = d[i]["price"]
                         dfUpdate.loc[i, "n-transactions"] += 1
                     else:
                         print("{}: non sono li dentro".format(i))
-                        d[i]["n-transactions"] = 1
-                        #d[i]["amount"] = d[i]["amount"]*g["price_usd"]
                         da_aggiungere = {i:d[i]}
                         dfDA = pd.DataFrame(data = da_aggiungere).T
                         dfUpdate = dfUpdate.append(dfDA)
-                       
-                dfUpdate.to_csv("shitcoins.csv")
+                    print(len(dfUpdate))
+                    dfUpdate.to_csv("shitcoins.csv")
+    t1 = time.time()
+    return t1-t0, "iterazioni salatate: {}".format(it_saltate)
 
 try:
     loop = asyncio.get_running_loop()
@@ -125,10 +132,14 @@ else:
     print('Starting new event loop')
     asyncio.run(main())
 
+
 #pprint(count)
 columns = ("amount","coincode","n-transactions","transactionHash","transactionInstant")
-t1 = time.time()
-print(t1-t0)
+# =============================================================================
+# t1 = time.time()
+# print(t1-t0)
+# print("iterazioni salatate: {}".format(it_saltate))
+# =============================================================================
 # =============================================================================
 #             for k in d:
 # # =============================================================================

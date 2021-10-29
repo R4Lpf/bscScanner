@@ -6,7 +6,7 @@
 # import time
 #   
 # 
-# GURU_KEY = "EXeZ404OuO3dww0eRzESkPT77IORFvFiL33xRjwAXME"
+# GURU_KEY = ""
 # 
 # #url of the page we want to scrape
 # url = "https://www.naukri.com/top-jobs-by-designations# desigtop600"
@@ -48,26 +48,86 @@ async get_tokens_finance(self, chain_id: int, token_addresses: List[str] = None,
 
 import asyncio
 from dexguru_sdk import DexGuru
+import pandas as pd
+import time
 
-YOUR_API_KEY = 'EXeZ404OuO3dww0eRzESkPT77IORFvFiL33xRjwAXME'
+# =============================================================================
+# import signal
+# from contextlib import contextmanager
+# 
+# class TimeoutException(Exception): pass
+# 
+# @contextmanager
+# def time_limit(seconds):
+#     def signal_handler(signum, frame):
+#         raise TimeoutException("Timed out!")
+#     signal.signal(signal.SIGALRM, signal_handler)
+#     signal.alarm(seconds)
+#     try:
+#         yield
+#     finally:
+#         signal.alarm(0)
+# =============================================================================
+
+# =============================================================================
+# try:
+#     with time_limit(10):
+#         long_function_call()
+# except TimeoutException as e:
+#     print("Timed out!")
+# =============================================================================
+
+
+t0 = time.time()
+
+YOUR_API_KEY = ''
 BSC_CHAIN_ID = 56
 
 sdk = DexGuru(api_key=YOUR_API_KEY)
-address = "0xcbd7142e42666132abe1f4c57996b2d5e8b0c9e2"
- 
+#address = "0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c"
+addr = ["0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c","0x00e1656e45f18ec6747f5a8496fd39b50b38396d","0x04298a8062daaa53d4f8a2f7df0e02e97e17b492","0x93300d53cc51dc7fc15f3bf56c9fe541228d2dd0","0x0b7cfd1379e4a914be026461215010c577dbc64f"]
+add = []
+l = {}
+
+dfUpdate = pd.read_csv("shitcoins.csv")
+try:
+    dfUpdate = dfUpdate.set_index("Unnamed: 0")
+except:
+    pass
+
+# =============================================================================
+# for i in dfUpdate.index:
+#     add.append(i)
+#     l[i] = {}
+# =============================================================================
+
 async def get_coin_data(address):
-    data = await sdk.get_token_finance(BSC_CHAIN_ID,address)
+    try:
+        #with time_limit(1):
+        data = await asyncio.wait_for(sdk.get_token_finance(BSC_CHAIN_ID,address), timeout=1.0)
+    except asyncio.TimeoutError:
+        #print('timeout!')
+        return 0, "timedout!!!"
+    except: #TimeoutException as e:
+        #print("Timed out!")
+        return 0 # WHEN IT FAILS TO GET THE PRICE DATA, IT MEANS THERE'S NOTHING ON DEXGURU ABOUT IT AND NEITHER IN POOCOIN.
     data_dict = {}
     for d in data:
         data_dict[d[0]] = d[1]
-        
+
     return data_dict
 
-async def main(address):
-    print("Ha funzionato")
-    result = await get_coin_data(address)
-    return result["price_usd"]
 
+async def main(address_list,price_dict):
+    print("Ha funzionato")
+    
+    for i in address_list:
+        price_dict[i] = {}
+        d = await get_coin_data(i)
+        print("{0} price: {1}".format(i,d))
+        price_dict[i]["price"] = d["price_usd"]
+    t1 = time.time()
+    return l, t1-t0
 # =============================================================================
 # print(main())
 # print(tokenData(address))
@@ -80,15 +140,15 @@ except RuntimeError:  # 'RuntimeError: There is no current event loop...'
 
 if loop and loop.is_running():
     print('Async event loop already running. Adding coroutine to the event loop.')
-    tsk = loop.create_task(main(address))
+    tsk = loop.create_task(main(addr,l))
     # ^-- https://docs.python.org/3/library/asyncio-task.html#task-object
     # Optionally, a callback function can be executed when the coroutine completes
     tsk.add_done_callback(
         lambda t: print(f'Task done with result={t.result()}  << return val of main()'))
 else:
     print('Starting new event loop')
-    asyncio.run(main(address))
-    
+    asyncio.run(main(addr,l))
+
 # =============================================================================
 # if __name__ == '__main__':
 #     asyncio.run(main())
