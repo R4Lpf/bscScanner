@@ -1,74 +1,39 @@
-
-import csv
 import scanner
-import numpy as np
 import pandas as pd
 from pprint import pprint
 import time
-#import scam_coins
 import time
-
 import asyncio
-# =============================================================================
-# from dexguru_sdk import DexGuru
-# 
-# YOUR_API_KEY = ''
-# BSC_CHAIN_ID = 56
-# 
-# sdk = DexGuru(api_key=YOUR_API_KEY)
-# #address = "0xcbd7142e42666132abe1f4c57996b2d5e8b0c9e2"
-# =============================================================================
- 
 
-
-"""
-TO PUT DATA INTO CSV
-
-from bs4 import BeautifulSoup
-import csv 
-import urllib.request as urllib2
-
-url="http://www.conakat.com/states/ohio/cities/defiance/road_maps/"
-
-page=urllib2.urlopen(url)
-
-soup = BeautifulSoup(page.read())
-
-f = csv.writer(open("Defiance Steets1.csv", "w"))
-f.writerow(["Name", "ZipCodes"]) # Write column headers as the first line
-
-links = soup.find_all('a')
-
-for link in links:
-    i = link.find_next_sibling('i')
-    if getattr(i, 'name', None):
-        a, i = link.string, i.string
-        f.writerow([a, i])
-"""
-
-# =============================================================================
-# csv_file = csv.writer(open("shitcoins.csv", "w"))
-# csv_file.writerow(["Name", "Address","N-Transactions","LastTransactionIstance"]) # Write column headers as the first line
-# =============================================================================
+####################################################
+#import matplotlib.pyplot as plt
+#import matplotlib.animation as animation
+#from matplotlib import style
+#####################################################
+#
+#style.use("fivethirtyeight")
+#fig, (ax1, ax2) = plt.subplots(2) #,figsize=(16,10), dpi= 80
+#####################################################
 t0 = time.time()
 url= "https://bscscan.com/tokentxns"
-#SCAMS = scam_coins.get_scam_addresses()
 
-    
+
+
 
 async def main():
-    count = {}
-    t = 100
+    t = 1000
+    it_compiute = 0
     it_saltate = 0
+
     for i in range(t):
         time.sleep(1)
-        mostbought_coins = []
         try:
             d = await asyncio.wait_for(scanner.fillDictionary({}), timeout=5.0) #await
             print("---------------------------------------------")
             print(i)
             print("_____________________________________________")
             print(d)
+            it_compiute += 1
         except:
             d = 0
             it_saltate+=1
@@ -81,6 +46,50 @@ async def main():
             if type(d) != type(None):
                 try:
                     dfUpdate = pd.read_csv("shitcoins.csv")
+                    top_8_transactions = dfUpdate.nlargest(8,"n-transactions")
+                    top_8_amount = dfUpdate.nlargest(8,"amount_usd")
+                    print(top_8_transactions[["Unnamed: 0", "coincode","n-transactions"]])
+                    print(top_8_amount[["Unnamed: 0", "coincode","amount_usd"]])
+                    print(len(dfUpdate))
+                    #######################################################################################
+
+                    #def animate():
+                    #    global top_8_transactions
+                    #    global top_8_amount
+                    #    top_8_transactions = top_8_transactions.set_index("coincode")
+                    #    top_8_transactions.reset_index(inplace=True)
+#
+                    #    top_8_amount = top_8_amount.set_index("coincode")
+                    #    top_8_amount.reset_index(inplace=True)
+#
+                    #    x = it_compiute
+                    #    y0 = top_8_transactions[0]["n-transactions"]
+                    #    y1 = top_8_transactions[1]["n-transactions"]
+                    #    y2 = top_8_transactions[2]["n-transactions"]
+                    #    y3 = top_8_transactions[3]["n-transactions"]
+                    #    y4 = top_8_transactions[4]["n-transactions"]
+                    #    y5 = top_8_transactions[5]["n-transactions"]
+                    #    y6 = top_8_transactions[6]["n-transactions"]
+                    #    y7 = top_8_transactions[7]["n-transactions"]
+#
+                    #    plt.cla()
+#
+                    #    plt.plot(x, y0, label='Channel 0')
+                    #    plt.plot(x, y1, label='Channel 1')
+                    #    plt.plot(x, y2, label='Channel 2')
+                    #    plt.plot(x, y3, label='Channel 3')
+                    #    plt.plot(x, y4, label='Channel 4')
+                    #    plt.plot(x, y5, label='Channel 5')
+                    #    plt.plot(x, y6, label='Channel 6')
+                    #    plt.plot(x, y7, label='Channel 7')
+#
+                    #    plt.legend(loc='upper left')
+                    #    plt.tight_layout()
+#
+#
+                    #ani = animation.FuncAnimation(fig,animate, interval = 5000)
+                    #plt.tight_layout()
+                    #plt.show()
                 except:
                    dfUpdate = pd.DataFrame(data=d).T
                    dfUpdate.to_csv("shitcoins.csv")  
@@ -91,15 +100,8 @@ async def main():
                 except:
                     continue
                 for i in d:
-                    #print(g)
-    # =============================================================================
-    #                     if i in SCAMS:
-    #                         print("{}: SCAMMINO".format(i))
-    #                         continue
-    #                     else:
-    # =============================================================================
                     if i in dfUpdate.index:
-                        print("{}: sono li dentro".format(i))
+                        #print("{}: sono li dentro".format(i))
                         dfUpdate.loc[i, "transactionInstant"] = d[i]["transactionInstant"]
                         dfUpdate.loc[i, "transactionHash"] = d[i]["transactionHash"]
                         dfUpdate.loc[i, "amount"] = dfUpdate.loc[i, "amount"] + d[i]["amount"]#*g["price_usd"]
@@ -107,11 +109,11 @@ async def main():
                         dfUpdate.loc[i, "price"] = d[i]["price"]
                         dfUpdate.loc[i, "n-transactions"] += 1
                     else:
-                        print("{}: non sono li dentro".format(i))
+                        #print("{}: non sono li dentro".format(i))
                         da_aggiungere = {i:d[i]}
                         dfDA = pd.DataFrame(data = da_aggiungere).T
                         dfUpdate = dfUpdate.append(dfDA)
-                    print(len(dfUpdate))
+                    
                     dfUpdate.to_csv("shitcoins.csv")
     t1 = time.time()
     return t1-t0, "iterazioni salatate: {}".format(it_saltate)
@@ -135,90 +137,4 @@ else:
 
 #pprint(count)
 columns = ("amount","coincode","n-transactions","transactionHash","transactionInstant")
-# =============================================================================
-# t1 = time.time()
-# print(t1-t0)
-# print("iterazioni salatate: {}".format(it_saltate))
-# =============================================================================
-# =============================================================================
-#             for k in d:
-# # =============================================================================
-# #                 print(k)
-# #                 print(d[k])
-# # =============================================================================
-#                 if k not in count:
-#                     count[k] = d[k]
-#                     count[k]["n-transactions"] = 1
-#                 else:
-#                     if count[k]["transactionInstant"] != d[k]["transactionInstant"] or count[k]["transactionHash"] != d[k]["transactionHash"]:
-#                         count[k]["n-transactions"] += 1
-#                     else:
-#                         continue
-# =============================================================================
-
-
-# =============================================================================
-# #used this to create the file for the first time
-# df = pd.DataFrame(data=count).T
-# df.to_csv('bruh2.csv')
-# print(df)
-# =============================================================================
-
-# =============================================================================
-# 
-# try:
-#     dfUpdate = pd.read_csv("shitcoins.csv")
-# except:
-#    dfUpdate = pd.DataFrame(data=count).T
-#    dfUpdate.to_csv("shitcoins.csv")  
-#    
-# dfUpdate = pd.read_csv("shitcoins.csv")
-# dfUpdate = dfUpdate.set_index("Unnamed: 0")
-# for i in count:
-#    if i in dfUpdate.index:
-#        print("{}: sono li dentro".format(i))
-#        dfUpdate.loc[dfUpdate["Unnamed: 0"] == i, "transactionInstant"] = count[i]["transactionInstant"]
-#        dfUpdate.loc[dfUpdate["Unnamed: 0"] == i, "transactionHash"] = count[i]["transactionHash"]
-#        dfUpdate.loc[dfUpdate["Unnamed: 0"] == i, "amount"] = count[i]["amount"]
-#        dfUpdate.loc[dfUpdate["Unnamed: 0"] == i, "n-transactions"] += 1
-#    else:
-#        print("{}: non sono li dentro".format(i))
-#        count[i]["n-transactions"] = 1
-#        da_aggiungere = {i:count[i]}
-#        dfDA = pd.DataFrame(data = da_aggiungere).T
-#        dfUpdate = dfUpdate.append(dfDA)
-#        
-# dfUpdate.to_csv("shitcoins.csv")
-# 
-# =============================================================================
-
-# =============================================================================
-# 
-# 
-# present = {}
-# 
-# try:
-#     dfUpdate = pd.read_csv("shitcoins.csv")
-# except:
-#     dfUpdate = pd.DataFrame(data=count).T
-#     dfUpdate.to_csv("shitcoins.csv")
-#     
-# dfUpdate = pd.read_csv("shitcoins.csv")
-# 
-# for i,r in enumerate(dfUpdate["Unnamed: 0"]):
-#     if r in count:
-#         print("{}: sono li dentro".format(r))
-#         dfUpdate.loc[i,["transactionInstant"]] = count[r]["transactionInstant"]
-#         dfUpdate.loc[i,["transactionHash"]] = count[r]["transactionHash"]
-#         dfUpdate.loc[i,["amount"]] = count[r]["amount"]
-#         dfUpdate.loc[i,["n-transactions"]] = dfUpdate.loc[i,["n-transactions"]] + count[r]["n-transactions"]
-#         present[r] = count[r]
-#         
-# rest = {k: count[k] for k in set(count)-set(present)}
-# dfRest = pd.DataFrame(data = rest).T
-# dfUpdate = dfUpdate.set_index("Unnamed: 0").append(dfRest)
-# dfUpdate.to_csv("bruh2.csv")
-# 
-# =============================================================================
-    
 

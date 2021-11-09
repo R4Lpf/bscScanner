@@ -25,7 +25,7 @@ The script made it so it hid all the coins with images so the "proper" coins so 
 
 
 from bs4 import BeautifulSoup as bs
-from urllib.request import Request, urlopen
+from urllib.request import Request, urlopen, FancyURLopener
 from pprint import pprint as pp
 import scam_coins
 import asyncio
@@ -39,12 +39,22 @@ sdk = DexGuru(api_key=YOUR_API_KEY)
 url = "https://bscscan.com/tokentxns"
 scam_url = "https://tokensniffer.com/tokens/scam"
 
-SCAMS = scam_coins.get_scam_addresses()
+try:
+    SCAMS = scam_coins.get_scam_addresses()
+except:
+    SCAMS = []
 
+with open("blacklist.txt", "r+") as file:
+    blacklist = file.read().split("\n")
 
-hdr = {'User-Agent': 'Mozilla/5.0'}
-req = Request(url,headers=hdr)
+headers = {'User-Agent': 'Mozilla/5.0'}
+req = Request(url, headers=headers)
 page = urlopen(req)
+
+
+#hdr = {'User-Agent': 'Mozilla/5.0'}
+#req = Request(url,headers=hdr)
+#page = urlopen(req)
 soup = bs(page)
 
 #print(soup.text)
@@ -132,15 +142,15 @@ async def get_coin_data(address):
         data = await asyncio.wait_for(sdk.get_token_finance(BSC_CHAIN_ID,address), timeout=1.0)
     except asyncio.TimeoutError:
         #print('timeout!')
-        return -2
+        return -2,-2,-2
     except: #TimeoutException as e:
         #print("Timed out!")
-        return -1 # WHEN IT FAILS TO GET THE PRICE DATA, IT MEANS THERE'S NOTHING ON DEXGURU ABOUT IT AND NEITHER IN POOCOIN.
+        return -1,-1,-1 # WHEN IT FAILS TO GET THE PRICE DATA, IT MEANS THERE'S NOTHING ON DEXGURU ABOUT IT AND NEITHER IN POOCOIN.
     data_dict = {}
     for d in data:
         data_dict[d[0]] = d[1]
 
-    return data_dict["price_usd"]
+    return data_dict["price_usd"],data_dict["volume_24h_usd"],data_dict["liquidity_usd"],
 
 
 def rows(url):
@@ -166,15 +176,15 @@ async def markingCoins(row): #async
     amount = info[7].text.strip()
     time = info[2].text.strip()
     coincode = info[-1].text.strip()
-    if img == whitelist and address not in SCAMS: #and scam_coins.isAScam(address) == False  THIS WAS WITH ASYNC and price != -1
+    if img == whitelist and address not in SCAMS and coincode != "()" and address not in blacklist: #and scam_coins.isAScam(address) == False  THIS WAS WITH ASYNC and price != -1
         #differentiated data in each row
         try:
-            price = await asyncio.wait_for(get_coin_data(address), timeout=1.0)
+            price,volume,pool = await asyncio.wait_for(get_coin_data(address), timeout=1.0)
             #print(price)
         except asyncio.TimeoutError:
-            price = -2
-        if price > -1:
-            return address, coincode, time, txnHash, amount , price
+            price,volume,pool = -2,-2,-2
+        if price > -1 and volume>1 and pool>1 and volume < 500000 and pool < 10000 and price<1:
+            return address, coincode, time, txnHash, amount, price, volume, pool 
     
 # =============================================================================
 # async def boh():
@@ -206,6 +216,8 @@ async def fillDictionary(coins: dict()): #async
                 txnHash = mark[3]
                 amount = mark[4]
                 price = mark[5]
+                volume = mark[6]
+                pool = mark[7]
                 #address, coincode, time, txnHash, amount, price = await markingCoins(row) #await
     # =============================================================================
     #                 try:
@@ -222,6 +234,8 @@ async def fillDictionary(coins: dict()): #async
                 coins[address]["price"] = price
                 coins[address]["amount_usd"] = float(amount.replace(",","")) * price
                 coins[address]["n-transactions"] = 1
+                coins[address]["volume"] = volume
+                coins[address]["pool_usd"] = pool
         return coins
     else: return 0
 
