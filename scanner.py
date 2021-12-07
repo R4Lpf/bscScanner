@@ -1,6 +1,6 @@
 """
 Initial JavaScript script used on the chrome extension: Custom JavaScript for Website 2.
-The script made it so it hid all the coins with images so the "proper" coins so bscscan displayed only the rows with "shitcoins"
+The script made it so it hid all the coins with images so the "proper" coins so bscscan displayed only the rows with "coins"
 
   setTimeout(
      function() {
@@ -31,7 +31,7 @@ import scam_coins
 import asyncio
 from dexguru_sdk import DexGuru
 
-YOUR_API_KEY = ''
+YOUR_API_KEY = 'EXeZ404OuO3dww0eRzESkPT77IORFvFiL33xRjwAXME'
 BSC_CHAIN_ID = 56
 
 sdk = DexGuru(api_key=YOUR_API_KEY)
@@ -50,11 +50,6 @@ with open("blacklist.txt", "r+") as file:
 headers = {'User-Agent': 'Mozilla/5.0'}
 req = Request(url, headers=headers)
 page = urlopen(req)
-
-
-#hdr = {'User-Agent': 'Mozilla/5.0'}
-#req = Request(url,headers=hdr)
-#page = urlopen(req)
 soup = bs(page)
 
 #print(soup.text)
@@ -296,7 +291,7 @@ async def fillDictionary(coins: dict()): #async
 # =============================================================================
 
 
-#print(shitcoins)
+#print(coins)
 
 
 """

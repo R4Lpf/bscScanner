@@ -89,7 +89,7 @@ addr = ["0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c","0x00e1656e45f18ec6747f5a84
 add = []
 pdi = {}
 
-dfUpdate = pd.read_csv("shitcoins.csv")
+dfUpdate = pd.read_csv("coins.csv")
 try:
     dfUpdate = dfUpdate.set_index("Unnamed: 0")
 except:

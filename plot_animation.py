@@ -7,7 +7,7 @@ style.use("fivethirtyeight")
 fig, (ax1, ax2) = plt.subplots(2) #,figsize=(16,10), dpi= 80
 
 def animate(i):
-    df = pd.read_csv("shitcoins.csv")
+    df = pd.read_csv("coins.csv")
     top_8_transactions = df.nlargest(8, "n-transactions")
     top_8_amount = df.nlargest(8, "amount_usd")
     print(top_8_transactions)
@@ -22,7 +22,7 @@ def animate(i):
     ax1.scatter(y=top_8_transactions.index, x=top_8_transactions["n-transactions"], s=75, color='firebrick', alpha=0.7)
 
     # Title, Label, Ticks and Ylim
-    ax1.set_title('Dot Plot for Most Popular shitcoins', fontdict={'size':22})
+    ax1.set_title('Dot Plot for Most Popular coins', fontdict={'size':22})
     ax1.set_xlabel('N-Transactions')
     ax1.set_yticks(top_8_transactions.index)
     ax1.set_yticklabels(top_8_transactions["coincode"].str.title(), fontdict={'horizontalalignment': 'right'})
@@ -41,7 +41,7 @@ def animate(i):
     ax2.scatter(y=top_8_amount.index, x=top_8_amount["amount_usd"], s=75, color='firebrick', alpha=0.7)
 
     # Title, Label, Ticks and Ylim
-    ax2.set_title('Dot Plot for Most Payed shitcoins', fontdict={'size':22})
+    ax2.set_title('Dot Plot for Most Payed coins', fontdict={'size':22})
     ax2.set_xlabel('USD')
     ax2.set_yticks(top_8_amount.index)
     ax2.set_yticklabels(top_8_amount["coincode"].str.title(), fontdict={'horizontalalignment': 'right'})
@@ -56,7 +56,7 @@ plt.show()
 
 
 
-#df = pd.read_csv("shitcoins.csv")
+#df = pd.read_csv("coins.csv")
 #    top_8_transactions = df.nlargest(8, "n-transactions")
 #    top_8_amount = df.nlargest(8, "amount_usd")
 #    print(top_8_transactions)

@@ -1,10 +1,10 @@
 from bs4 import BeautifulSoup as bs
 from urllib.request import Request, urlopen
 from pprint import pprint as pp
+import requests
 
 
-
-scam_url= "https://tokensniffer.com/tokens/scam"
+scam_url= "https://tokensniffer.com/tokens/scam" #per ora token sniffer non funziona proprio.
 
 
 
@@ -13,6 +13,7 @@ def rows(url):
     hdr = {'User-Agent': 'Mozilla/5.0'}
     req = Request(url,headers=hdr)
     page = urlopen(req)
+    #page = requests.get(url)
     soup = bs(page)
     table = soup.find("table")
     if table != None:
@@ -35,8 +36,11 @@ def get_scam_addresses():
 def isAScam(address):
     return address in get_scam_addresses()
 
+
+headers = {'User-Agent': 'Mozilla/5.0'}
+page = requests.get(scam_url, headers=headers)
 # =============================================================================
-# print(get_scam_addresses())
+print(page.content.decode())
 # print(isAScam("0xb3a6381070b1a15169dea646166ec0699fdaea79"))
 # 
 # =============================================================================

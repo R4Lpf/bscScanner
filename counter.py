@@ -45,7 +45,7 @@ async def main():
         else:
             if type(d) != type(None):
                 try:
-                    dfUpdate = pd.read_csv("shitcoins.csv")
+                    dfUpdate = pd.read_csv("coins.csv")
                     top_8_transactions = dfUpdate.nlargest(8,"n-transactions")
                     top_8_amount = dfUpdate.nlargest(8,"amount_usd")
                     print(top_8_transactions[["Unnamed: 0", "coincode","n-transactions"]])
@@ -92,9 +92,9 @@ async def main():
                     #plt.show()
                 except:
                    dfUpdate = pd.DataFrame(data=d).T
-                   dfUpdate.to_csv("shitcoins.csv")  
+                   dfUpdate.to_csv("coins.csv")  
                    
-                dfUpdate = pd.read_csv("shitcoins.csv")
+                dfUpdate = pd.read_csv("coins.csv")
                 try:
                     dfUpdate = dfUpdate.set_index("Unnamed: 0")
                 except:
@@ -114,7 +114,7 @@ async def main():
                         dfDA = pd.DataFrame(data = da_aggiungere).T
                         dfUpdate = dfUpdate.append(dfDA)
                     
-                    dfUpdate.to_csv("shitcoins.csv")
+                    dfUpdate.to_csv("coins.csv")
     t1 = time.time()
     return t1-t0, "iterazioni salatate: {}".format(it_saltate)
 
